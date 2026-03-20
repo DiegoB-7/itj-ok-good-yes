@@ -83,7 +83,6 @@ export const POST: RequestHandler = async ({ request }) => {
       merged.set(new Uint8Array(buf), offset);
       offset += buf.byteLength;
     }
-    console.log('entro')
 
     return new Response(merged, {
       headers: {

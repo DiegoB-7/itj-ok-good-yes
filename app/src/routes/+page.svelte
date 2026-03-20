@@ -4,10 +4,11 @@
   import AnalyzingScreen  from '$lib/ui/components/analyzing/AnalyzingScreen.component.svelte';
   import ResultsScreen    from '$lib/ui/components/results/ResultsScreen.component.svelte';
   import type { QAPair, CareerAnalysis } from '$lib/interfaces/types.interface';
+  import LandingScreen from '$lib/ui/components/landing/LandingScreen.component.svelte';
 
-  type Screen = 'interview' | 'analyzing' | 'results';
+  type Screen = 'landing' | 'interview' | 'analyzing' | 'results';
 
-  let screen   = $state<Screen>('interview');
+  let screen   = $state<Screen>('landing');
   let answers  = $state<QAPair[]>([]);
   let analysis = $state<CareerAnalysis | null>(null);
   let errMsg   = $state<string | null>(null);
@@ -63,7 +64,10 @@
         {answers}
         onComplete={onAnalysisComplete}
         onError={onAnalysisError}
-      />
+    />
+
+    {:else if screen === 'landing'}
+      <LandingScreen onStart={() => (screen = 'interview')} />
 
     {:else if screen === 'results' && analysis}
       <ResultsScreen {analysis} onRestart={restart} />
