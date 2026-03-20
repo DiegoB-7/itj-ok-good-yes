@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { fly, fade } from 'svelte/transition';
-  import { Mic, MicOff, MessageSquare, SkipForward, Loader2 } from '@lucide/svelte';
-  import AIAvatar from '$lib/ui/components/interview/AIAvatar.component.svelte';
+  import { fly, fade, scale } from 'svelte/transition';
+  import { Mic, MicOff, MessageSquare, SkipForward, Loader2, Sparkles, Check, Flag } from '@lucide/svelte';  import AIAvatar from '$lib/ui/components/interview/AIAvatar.component.svelte';
   import ChatBubble   from '$lib/ui/components/interview/ChatBubble.component.svelte';
   import VoiceWaveform from '$lib/ui/components/interview/VoiceWaveForm.component.svelte';
   import type { QAPair } from '$lib/interfaces/types.interface';
@@ -13,23 +12,28 @@
   let { onComplete }: Props = $props();
 
   // ── Static data ───────────────────────────────────────────────
-  const questions = [
+  const mainQuestions = [
     'Tell me about your current role and what you do day-to-day.',
     'What technical skills are you most confident in?',
     'Where do you see yourself in 3 years?',
-    "What's the biggest challenge you face in your current position?",
-    'What kind of role or company would be your dream next step?',
   ];
 
   const chips = ['Web development', 'Mobile apps', 'Backend systems', 'Data & ML'];
 
   // ── State ─────────────────────────────────────────────────────
-  let step             = $state(0);
+  let mainStep         = $state(0); // current main question index
+  let currentFollowUpQuestion = $state<string>(''); // single follow-up at a time
+  let followUpPhase = $state<'none' | 'first' | 'second'>('none'); // track which follow-up we're on
   let isAISpeaking     = $state(true);
   let messages         = $state<{ text: string; isAI: boolean }[]>([]);
   let showInput        = $state(false);
   let inputText        = $state('');
   let collectedAnswers = $state<QAPair[]>([]);
+  let isCheckingFollowUp = $state(false); // checking if follow-up is needed
+  let isCompleted = $state(false); // interview is completely done
+  
+  // Track completed follow-ups per main question (persistent)
+  let completedFollowUpsByQuestion = $state<Record<number, number>>({ 0: 0, 1: 0, 2: 0 });
 
   // Recording state
   let isRecording      = $state(false);
@@ -46,7 +50,7 @@
   // ── Boot ──────────────────────────────────────────────────────
   $effect(() => {
     const t = setTimeout(async () => {
-      const firstQuestion = questions[0];
+      const firstQuestion = mainQuestions[0];
       messages = [{ text: firstQuestion, isAI: true }];
       await speak(firstQuestion);
     }, 800);
@@ -110,26 +114,143 @@
 
 
   async function respond(answer: string) {
-    collectedAnswers = [...collectedAnswers, { question: questions[step], answer }];
+    collectedAnswers = [...collectedAnswers, { question: getCurrentQuestion(), answer }];
     messages         = [...messages, { text: answer, isAI: false }];
     showInput        = false;
     inputText        = '';
     recordingError   = null;
 
-    const isLast = step >= questions.length - 1;
+    const isLastMain = mainStep >= mainQuestions.length - 1;
 
-    if (!isLast) {
-      const next = step + 1;
+    if (isLastMain && !currentFollowUpQuestion) {
+      // Last question answered with no follow-ups, complete interview
+      isCompleted = true;
+      setTimeout(() => onComplete(collectedAnswers), 1400);
+    } else if (followUpPhase === 'first' && currentFollowUpQuestion) {
+      // Just answered first follow-up, increment and try for second
+      completedFollowUpsByQuestion[mainStep] = 1;
+      currentFollowUpQuestion = '';
+      followUpPhase = 'none';
 
-      // Small pause, then speak the next question
       setTimeout(async () => {
-        step = next;
-        const nextQuestion = questions[next];
-        messages = [...messages, { text: nextQuestion, isAI: true }];
-        await speak(nextQuestion);
+        // Check for second follow-up (with first answer now in history)
+        const maxFollowUpsReached = completedFollowUpsByQuestion[mainStep] >= 2;
+
+        if (maxFollowUpsReached) {
+          // Already have 1 follow-up, skip checking for second
+          if (!isLastMain) {
+            mainStep += 1;
+            const nextQuestion = mainQuestions[mainStep];
+            messages = [...messages, { text: nextQuestion, isAI: true }];
+            await speak(nextQuestion);
+          }
+        } else {
+          // Try to get second follow-up
+          await checkForFollowUp(true);
+
+          if (currentFollowUpQuestion) {
+            followUpPhase = 'second';
+            messages = [...messages, { text: currentFollowUpQuestion, isAI: true }];
+            await speak(currentFollowUpQuestion);
+          } else {
+            // No second follow-up, move to next main question
+            if (!isLastMain) {
+              mainStep += 1;
+              const nextQuestion = mainQuestions[mainStep];
+              messages = [...messages, { text: nextQuestion, isAI: true }];
+              await speak(nextQuestion);
+            }
+          }
+        }
+      }, 900);
+    } else if (followUpPhase === 'second' && currentFollowUpQuestion) {
+      // Just answered second follow-up, move to next main question
+      completedFollowUpsByQuestion[mainStep] = 2;
+      currentFollowUpQuestion = '';
+      followUpPhase = 'none';
+
+      setTimeout(async () => {
+        if (!isLastMain) {
+          mainStep += 1;
+          const nextQuestion = mainQuestions[mainStep];
+          messages = [...messages, { text: nextQuestion, isAI: true }];
+          await speak(nextQuestion);
+        }
       }, 900);
     } else {
-      setTimeout(() => onComplete(collectedAnswers), 1400);
+      // Just answered a main question, try to get first follow-up
+      setTimeout(async () => {
+        // Check if we've already reached the max 2 follow-ups for this question
+        const maxFollowUpsReached = completedFollowUpsByQuestion[mainStep] >= 2;
+
+        if (maxFollowUpsReached) {
+          // Already have 2 follow-ups, skip to next main question without checking
+          if (!isLastMain) {
+            mainStep += 1;
+            const nextQuestion = mainQuestions[mainStep];
+            messages = [...messages, { text: nextQuestion, isAI: true }];
+            await speak(nextQuestion);
+          }
+        } else {
+          // Try to get first follow-up
+          await checkForFollowUp(false);
+
+          if (currentFollowUpQuestion) {
+            followUpPhase = 'first';
+            messages = [...messages, { text: currentFollowUpQuestion, isAI: true }];
+            await speak(currentFollowUpQuestion);
+          } else {
+            // No follow-up, move to next main question
+            if (!isLastMain) {
+              mainStep += 1;
+              const nextQuestion = mainQuestions[mainStep];
+              messages = [...messages, { text: nextQuestion, isAI: true }];
+              await speak(nextQuestion);
+            }
+          }
+        }
+      }, 900);
+    }
+  }
+
+  function getCurrentQuestion(): string {
+    if (currentFollowUpQuestion) {
+      return currentFollowUpQuestion;
+    }
+    return mainQuestions[mainStep];
+  }
+
+  async function checkForFollowUp(isSecond: boolean = false) {
+    isCheckingFollowUp = true;
+
+    try {
+      const currentAnswer = collectedAnswers[collectedAnswers.length - 1];
+      if (!currentAnswer) return;
+
+      const res = await fetch('/api/follow-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: currentAnswer.question,
+          answer: currentAnswer.answer,
+          previousQA: collectedAnswers.slice(0, -1), // exclude current answer
+        }),
+      });
+
+      if (!res.ok) {
+        console.error('Follow-up check failed:', res.statusText);
+        return;
+      }
+
+      const { shouldAsk, followUpQuestion } = await res.json();
+
+      if (shouldAsk && followUpQuestion?.trim()) {
+        currentFollowUpQuestion = followUpQuestion;
+      }
+    } catch (e) {
+      console.error('Follow-up fetch error:', e);
+    } finally {
+      isCheckingFollowUp = false;
     }
   }
 
@@ -229,17 +350,67 @@
 
   <!-- ── Progress dots ───────────────────────────────────────── -->
   <div class="flex justify-center gap-2 pt-8 pb-4">
-    {#each questions as _, i}
-      <span
-        in:fly={{ y: -6, duration: 300, delay: i * 80 }}
-        class="w-3 h-3 rounded-full transition-all duration-500
-               {i === step
-                 ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)]'
-                 : i < step
-                 ? 'bg-primary/40'
-                 : 'bg-secondary'}"
-      ></span>
+    <!-- Main question dots with their follow-ups below -->
+    {#each mainQuestions as _, i}
+      <div class="flex flex-col items-center">
+        <!-- Main dot -->
+        <div
+          in:fly={{ y: -6, duration: 300, delay: i * 80 }}
+          class="w-4 h-4 rounded-full transition-all duration-500 flex items-center justify-center
+                 {i === mainStep && !currentFollowUpQuestion
+                   ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)]'
+                   : i < mainStep
+                   ? 'bg-primary/40'
+                   : 'bg-secondary'}
+                 {i === mainStep && !currentFollowUpQuestion && isCheckingFollowUp
+                   ? 'animate-pulse'
+                   : ''}"
+        >
+          {#if i < mainStep}
+            <Check class="w-2 h-2 text-primary-foreground" />
+          {/if}
+        </div>
+
+        <!-- Follow-up dots (ALWAYS show completed ones, current dot only if active question) -->
+        {#if completedFollowUpsByQuestion[i] > 0 || (mainStep === i && followUpPhase !== 'none')}
+          <div
+            in:fly={{ y: -4, duration: 280 }}
+            out:fly={{ y: 4, duration: 200 }}
+            class="flex flex-col items-center gap-1 mt-2"
+          >
+            <!-- Completed follow-up dots (shown permanently) -->
+            {#each Array(completedFollowUpsByQuestion[i]) as _, fIdx}
+              <span
+                in:scale={{ duration: 300, delay: fIdx * 100 }}
+                class="w-2.5 h-2.5 rounded-full bg-accent/70 
+                       shadow-[0_0_6px_rgba(239,68,68,0.4)]"
+              ></span>
+            {/each}
+
+            <!-- Current follow-up dot (only shown if this is the active question) -->
+            {#if mainStep === i && followUpPhase !== 'none'}
+              <span
+                in:scale={{ duration: 300 }}
+                class="w-3 h-3 rounded-full bg-accent scale-110
+                       shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
+              ></span>
+            {/if}
+          </div>
+        {/if}
+      </div>
     {/each}
+
+    <!-- Final dot (goal/end indicator with icon) -->
+    <div class="flex flex-col items-center">
+      <div
+        in:fly={{ y: -6, duration: 300, delay: 3 * 80 }}
+        class="w-4 h-4 rounded-full transition-all duration-500 flex items-center justify-center
+               {isCompleted
+                 ? 'bg-accent scale-125 shadow-[0_0_10px_rgba(239,68,68,0.6)]'
+                 : 'bg-accent/40'}"
+      >
+        <Flag class="w-3 h-3 {isCompleted ? 'text-background drop-shadow-lg' : 'text-accent/80'}" />      </div>
+    </div>
   </div>
 
   <!-- ── Main content ─────────────────────────────────────────── -->
@@ -250,22 +421,42 @@
       <AIAvatar isSpeaking={isAISpeaking} size="lg" />
     </div>
 
-    <!-- Question card — re-mounts on step change for transition -->
-    {#key step}
+    <!-- Question card — re-mounts on question change for transition -->
+    {#key `${mainStep}-${followUpPhase}`}
       <div
         in:fly={{ y: 18, duration: 320 }}
         class="bg-card text-card-foreground rounded-2xl px-6 py-5
                max-w-md w-full text-center mb-8 shadow-lg"
       >
-        <p class="text-lg font-medium leading-snug">{questions[step]}</p>
+        <div class="flex items-center gap-2 justify-center mb-1">
+          {#if followUpPhase !== 'none'}
+            <Sparkles class="w-4 h-4 text-accent" />
+          {/if}
+        </div>
+        <p class="text-lg font-medium leading-snug">{getCurrentQuestion()}</p>
+        {#if followUpPhase !== 'none'}
+          <p class="text-xs text-muted-foreground mt-2">Follow-up question</p>
+        {/if}
       </div>
     {/key}
+
+    <!-- Follow-up checking indicator -->
+    {#if isCheckingFollowUp}
+      <div
+        in:fade={{ duration: 200 }}
+        out:fade={{ duration: 200 }}
+        class="flex items-center gap-2 text-sm text-muted-foreground mb-4"
+      >
+        <div class="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></div>
+        <span>AI is thinking...</span>
+      </div>
+    {/if}
 
     <!-- Waveform -->
     <VoiceWaveform isActive={isRecording || isAISpeaking} isListening={isRecording} />
 
-    <!-- Suggestion chips — only on first unanswered question -->
-    {#if step === 0 && messages.length <= 1 && !isRecording}
+    <!-- Suggestion chips — only on first main question -->
+    {#if mainStep === 0 && followUpPhase === 'none' && messages.length <= 1 && !isRecording}
       <div
         in:fade={{ duration: 300, delay: 600 }}
         class="flex flex-wrap justify-center gap-2 mt-5"
