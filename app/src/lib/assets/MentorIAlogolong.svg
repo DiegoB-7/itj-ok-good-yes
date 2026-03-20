@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="47.36478mm"
+   width="175.10172mm"
    height="49.207142mm"
-   viewBox="0 0 47.36478 49.207142"
+   viewBox="0 0 175.10172 49.207142"
    version="1.1"
    id="svg1"
    sodipodi:docname="MentorIA.svg"
@@ -38,24 +38,55 @@
     <inkscape:page
        x="0"
        y="0"
-       width="47.36478"
+       width="175.10172"
        height="49.207142"
        id="page2"
        margin="0"
        bleed="0" />
   </sodipodi:namedview>
   <defs
-     id="defs1" />
+     id="defs1">
+    <rect
+       x="238.60934"
+       y="491.82742"
+       width="536.62756"
+       height="137.32211"
+       id="rect3" />
+    <rect
+       x="238.60934"
+       y="491.82742"
+       width="536.62756"
+       height="137.32211"
+       id="rect3-4" />
       <linearGradient id="miGradiente" x1="0%" y1="0%" x2="100%" y2="0%">
          <stop offset="0%" stop-color="#04A28F" />
          <stop offset="100%" stop-color="#0057F0" />
     </linearGradient>
+  </defs>
+  <text
+     xml:space="preserve"
+     transform="matrix(0.26458333,0,0,0.26458333,-15.609525,-124.48171)"
+     id="text2"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:106.667px;font-family:'Malgun Gothic';-inkscape-font-specification:'Malgun Gothic Bold';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect3);display:inline;fill:#334F68;fill-opacity:1;fill-rule:evenodd;stroke-width:2.64567;paint-order:stroke fill markers"
+     inkscape:label="IA-TEXTO"><tspan
+       x="238.60938"
+       y="590.47427"
+       id="tspan3">MentorIA</tspan></text>
+  <text
+     xml:space="preserve"
+     transform="matrix(0.26458333,0,0,0.26458333,-15.609525,-124.48171)"
+     id="text2-8"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:106.667px;font-family:'Malgun Gothic';-inkscape-font-specification:'Malgun Gothic Bold';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect3-4);display:inline;fill:#0057F0;fill-opacity:1;fill-rule:evenodd;stroke-width:2.64567;paint-order:stroke fill markers"
+     inkscape:label="MENTOR-TEXTO"><tspan
+       x="238.60938"
+       y="590.47427"
+       id="tspan4">          IA</tspan></text>
   <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="SVG"
      style="display:inline"
-     transform="translate(-2.7893644,-115.89267)">
+     transform="translate(-2.7893643,-115.89267)">
     <path
        id="rect2"
        style="fill:url(#miGradiente);fill-rule:evenodd;stroke:none;stroke-width:0.7;paint-order:stroke fill markers"
@@ -81,16 +112,16 @@
        style="display:inline">
       <path
          d="m 23.165898,128.51936 c -1.618859,0 -2.922302,1.30292 -2.922302,2.92178 v 1.15394 c 0,1.61886 1.303443,2.9223 2.922302,2.9223 h 11.773958 c 1.618859,0 2.921786,-1.30344 2.921786,-2.9223 v -1.15394 c 0,-1.61886 -1.302927,-2.92178 -2.921786,-2.92178 z m 0.945678,2.1978 a 1.2391051,1.2391051 0 0 1 1.238685,1.23868 1.2391051,1.2391051 0 0 1 -1.238685,1.2392 1.2391051,1.2391051 0 0 1 -1.2392,-1.2392 1.2391051,1.2391051 0 0 1 1.2392,-1.23868 z m 9.572026,0.0455 a 1.2391051,1.2391051 0 0 1 1.239201,1.2392 1.2391051,1.2391051 0 0 1 -1.239201,1.23869 1.2391051,1.2391051 0 0 1 -1.239201,-1.23869 1.2391051,1.2391051 0 0 1 1.239201,-1.2392 z"
-         style="display:inline;fill:url(#miGradiente);fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers"
+         style="display:inline;fill:#243647;fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers"
          id="path17" />
       <path
          d="m 24.111576,130.71716 a 1.2391051,1.2391051 0 0 0 -1.2392,1.23868 1.2391051,1.2391051 0 0 0 1.2392,1.2392 1.2391051,1.2391051 0 0 0 1.238685,-1.2392 1.2391051,1.2391051 0 0 0 -1.238685,-1.23868 z"
-         style="display:inline;fill:url(#miGradiente);fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers"
+         style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers"
          id="path18"
          inkscape:label="ojo" />
       <path
          d="m 33.683602,130.76263 a 1.2391051,1.2391051 0 0 0 -1.239201,1.2392 1.2391051,1.2391051 0 0 0 1.239201,1.23869 1.2391051,1.2391051 0 0 0 1.239201,-1.23869 1.2391051,1.2391051 0 0 0 -1.239201,-1.2392 z"
-         style="display:inline;fill:url(#miGradiente);fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers; "
+         style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:0.7;paint-order:stroke fill markers"
          id="path19"
          inkscape:label="ojo" />
       <rect
@@ -114,5 +145,17 @@
          inkscape:label="ceja 1"
          transform="matrix(0.95390429,-0.300111,0,1,0,0)" />
     </g>
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:url(#miGradiente);stroke-width:0.7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       d="m 15.328391,119.53433 a 1.5621963,1.5083275 0 0 1 1.562179,1.50843 1.5621963,1.5083275 0 0 1 -1.191659,1.46141 v 14.87248 c 0,0.0548 -0.04442,0.0987 -0.09922,0.0987 h -0.833025 c -0.0076,0 -0.01409,-0.002 -0.02119,-0.004 v 0.003 c -2.169152,-0.004 -3.456687,-3.11878 -3.458187,-5.41104 0.0017,-2.26375 1.308184,-4.66663 3.380672,-5.7118 v -3.94239 a 1.5621963,1.5083275 0 0 1 -0.901753,-1.36581 1.5621963,1.5083275 0 0 1 1.562178,-1.50843 z"
+       id="path3-5" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:url(#miGradiente);stroke-width:0.7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       d="m 42.256268,119.54583 v 5.2e-4 a 1.5621963,1.5083275 0 0 1 1.562178,1.50844 1.5621963,1.5083275 0 0 1 -0.901753,1.3658 v 3.9424 c 2.07249,1.04517 3.379012,3.44805 3.380672,5.7118 -0.002,2.29226 -1.289027,5.40658 -3.458187,5.41103 v -0.003 c -0.007,0.002 -0.01359,0.004 -0.02119,0.004 h -0.833025 c -0.0548,0 -0.09922,-0.0439 -0.09922,-0.0987 v -14.87248 a 1.5621963,1.5083275 0 0 1 -1.191659,-1.46141 1.5621963,1.5083275 0 0 1 1.562179,-1.50844 z"
+       id="path2-1" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:url(#miGradiente);stroke-width:0.7;stroke-opacity:1;paint-order:stroke fill markers"
+       d="m 23.672824,122.08877 h 10.152868 c 3.540243,0 6.390308,2.85058 6.390308,6.39083 v 5.45031 c 0,3.54024 -2.850065,6.39031 -6.390308,6.39031 H 23.672824 c -3.540244,0 -6.390308,-2.85007 -6.390308,-6.39031 v -5.45031 c 0,-3.54025 2.850064,-6.39083 6.390308,-6.39083 z"
+       id="path7" />
   </g>
 </svg>

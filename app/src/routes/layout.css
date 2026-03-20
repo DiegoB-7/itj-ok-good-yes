@@ -127,6 +127,17 @@
   50%       { r: 18; }
 }
 
+@keyframes blink {
+to {
+    visibility: hidden;
+  }
+}
+@-webkit-keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 20px rgba(4,162,143,0.3); }
   50%       { box-shadow: 0 0 40px rgba(4,162,143,0.6); }
@@ -200,6 +211,10 @@
 }
 .avatar-circle-speaking {
   animation: svg-circle-pulse 0.5s ease-in-out infinite;
+}
+.eye {
+  animation: blink-animation 3s steps(5, start) infinite;
+  -webkit-animation: blink-animation 3s steps(5, start) infinite;
 }
 
 /* ─── Analyzing screen ─── */

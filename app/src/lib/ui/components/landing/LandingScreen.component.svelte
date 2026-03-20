@@ -2,7 +2,7 @@
   import { fly, fade } from 'svelte/transition';
   import { ArrowRight, Users, User } from '@lucide/svelte';
   import FloatingOrbs from '$lib/components/FloatingOrbs.svelte';
-  import logo from "$lib/assets/logo.png";
+  import logo from "$lib/assets/MentorIAlogolong.svg";
 
   interface Props {
     onStart: () => void;
