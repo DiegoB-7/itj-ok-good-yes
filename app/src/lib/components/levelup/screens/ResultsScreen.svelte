@@ -131,7 +131,7 @@
 
 <div class="min-h-screen bg-background">
   <!-- Header -->
-  <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+  <header class="sticky top-0 z-50 bg-white backdrop-blur-lg border-b border-border">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <h1 class="text-xl font-bold text-primary">LevelUp</h1>
       <div class="flex items-center gap-3">
@@ -307,13 +307,13 @@
         </div>
 
         <button
-          in:fly={{ x: 20, duration: 400, delay: 800 }}
-          class="btn-pressable w-full py-3 px-6 bg-gradient-primary text-primary-foreground rounded-full
-                 font-semibold flex items-center justify-center gap-2
-                 shadow-[0_0_20px_rgba(4,162,143,0.3)]"
+        in:fly={{ x: 20, duration: 400, delay: 800 }}
+        class="btn-gradient-animate btn-pressable w-full py-3 px-6 bg-gradient-primary text-primary-foreground rounded-full
+                font-semibold flex items-center justify-center gap-2
+                shadow-[0_0_20px_rgba(4,162,143,0.3)]"
         >
-          <Share2 class="w-4 h-4" />
-          Share my roadmap
+        <Share2 class="w-4 h-4" />
+        Share my roadmap
         </button>
       </aside>
     </div>

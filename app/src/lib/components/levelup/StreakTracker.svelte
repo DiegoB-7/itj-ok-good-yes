@@ -14,8 +14,12 @@
 
 <div class="bg-card text-card-foreground rounded-2xl p-4">
   <div class="flex items-center gap-2 mb-4">
-    <Flame class="w-5 h-5 text-warning" />
-    <span class="font-bold">{streak} day streak</span>
+    <Flame class="w-5 h-5 text-orange-500 animate-flame-flicker" />
+    <span class="font-bold inline-block">
+      <span class="text-2xl font-black animate-fire-streak">
+        {streak} day streak
+      </span>
+    </span>
   </div>
 
   <div class="flex justify-between gap-2">
@@ -23,12 +27,12 @@
       <div class="flex flex-col items-center gap-2">
         <div
           in:scale={{ duration: 300, delay: index * 100 }}
-          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all
                  {completed
-                   ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(74,222,128,0.4)]'
-                   : 'bg-secondary text-muted-foreground'}"
+                   ? 'bg-gradient-to-br from-orange-400 to-red-600 text-white animate-flame-pulse'
+                   : 'bg-gray-200 text-gray-400'}"
         >
-          {completed ? '✓' : ''}
+          {completed ? '🔥' : ''}
         </div>
         <span class="text-xs text-muted-foreground">{dayLabels[index]}</span>
       </div>
