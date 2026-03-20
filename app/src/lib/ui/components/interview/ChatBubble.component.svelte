@@ -18,7 +18,7 @@
   <div
     class="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed
            {isAI
-             ? 'bg-secondary text-secondary-foreground rounded-tl-sm'
+             ? 'bg-muted text-secondary-foreground rounded-tl-sm'
              : 'bg-primary text-primary-foreground rounded-tr-sm'}"
   >
     {message}

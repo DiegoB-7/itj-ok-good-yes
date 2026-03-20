@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fly, fade, scale } from 'svelte/transition';
-  import { Mic, MicOff, MessageSquare, SkipForward, Loader2, Sparkles, Check, Flag } from '@lucide/svelte';  import AIAvatar from '$lib/ui/components/interview/AIAvatar.component.svelte';
+  import { Mic, MicOff, MessageSquare, SkipForward, Loader2, Sparkles, Check, Flag, X } from '@lucide/svelte';
+  import AIAvatar from '$lib/ui/components/interview/AIAvatar.component.svelte';
   import ChatBubble   from '$lib/ui/components/interview/ChatBubble.component.svelte';
   import VoiceWaveform from '$lib/ui/components/interview/VoiceWaveForm.component.svelte';
   import type { QAPair } from '$lib/interfaces/types.interface';
@@ -18,7 +19,7 @@
     'Where do you see yourself in 3 years?',
   ];
 
-  const chips = ['Web development', 'Mobile apps', 'Backend systems', 'Data & ML'];
+  const chips = ['Web development', 'Mobile apps', 'Backend systems', 'Data & ML' ];
 
   // ── State ─────────────────────────────────────────────────────
   let mainStep         = $state(0); // current main question index
@@ -356,17 +357,17 @@
         <!-- Main dot -->
         <div
           in:fly={{ y: -6, duration: 300, delay: i * 80 }}
-          class="w-4 h-4 rounded-full transition-all duration-500 flex items-center justify-center
+          class="w-5 h-5 rounded-full transition-all duration-500 flex items-center justify-center
                  {i === mainStep && !currentFollowUpQuestion
                    ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)]'
                    : i < mainStep
-                   ? 'bg-primary/40'
-                   : 'bg-secondary'}
+                   ? 'bg-primary/60'
+                   : 'border-1 bg-background border-secondary'}
                  {i === mainStep && !currentFollowUpQuestion && isCheckingFollowUp
                    ? 'animate-pulse'
                    : ''}"
         >
-          {#if i < mainStep}
+          {#if i < mainStep || (isCompleted && i === mainStep)}
             <Check class="w-2 h-2 text-primary-foreground" />
           {/if}
         </div>
@@ -404,12 +405,13 @@
     <div class="flex flex-col items-center">
       <div
         in:fly={{ y: -6, duration: 300, delay: 3 * 80 }}
-        class="w-4 h-4 rounded-full transition-all duration-500 flex items-center justify-center
+        class="w-5 h-5 rounded-full transition-all duration-500 flex items-center justify-center
                {isCompleted
-                 ? 'bg-accent scale-125 shadow-[0_0_10px_rgba(239,68,68,0.6)]'
-                 : 'bg-accent/40'}"
+                 ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)] text-white'
+                 : 'border-1 bg-background border-secondary'}"         
       >
-        <Flag class="w-3 h-3 {isCompleted ? 'text-background drop-shadow-lg' : 'text-accent/80'}" />      </div>
+        <Flag class="text-secondary w-3/5 h-3/5 {isCompleted ? 'text-white' : 'text-secondary'}" />
+      </div>
     </div>
   </div>
 
@@ -464,8 +466,8 @@
         {#each chips as chip}
           <button
             onclick={() => respond(`I work in ${chip.toLowerCase()}`)}
-            class="px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm
-                   hover:bg-secondary/70 transition-colors active:scale-95"
+            class="btn-pressable px-4 py-2 bg-gradient-primary text-secondary-foreground rounded-full text-sm
+                   hover:bg-gradient-primary/70 transition-colors active:scale-95  mb-8"
           >
             {chip}
           </button>
@@ -474,12 +476,12 @@
     {/if}
 
     <!-- Chat history -->
-    <div class="w-full max-w-md mt-7 space-y-3 max-h-48 overflow-y-auto pr-1">
+   <!-- <div class="w-full max-w-lg mt-7 space-y-3 max-h-48 overflow-y-auto pr-5">
       {#each visible as msg, i (msg.text + i)}
         <ChatBubble message={msg.text} isAI={msg.isAI} />
       {/each}
-    </div>
-
+    </div>-->
+    
   </div>
 
   <!-- ── Bottom controls ──────────────────────────────────────── -->
@@ -489,17 +491,33 @@
            px-6 pt-10 pb-8"
   >
     <div class="max-w-md mx-auto">
-
       {#if showInput}
+        <!-- Chat history -->
+        <div class="w-full max-w-lg mt-7 space-y-3 max-h-48 overflow-y-auto pr-5 mb-4">
+          {#each visible as msg, i (msg.text + i)}
+            <ChatBubble message={msg.text} isAI={msg.isAI} />
+          {/each}
+        </div>
         <!-- Text input mode -->
         <form onsubmit={submitText} class="flex gap-3">
+          <!-- Back button -->
+          <button
+            type="button"
+            onclick={() => (showInput = false)}
+            class="p-3.5 bg-secondary text-secondary-foreground rounded-full
+                   hover:bg-secondary/70 transition-colors"
+            aria-label="Close text input"
+          >
+            <X class="w-5 h-5" />
+          </button>
+          
           <!-- svelte-ignore a11y_autofocus -->
           <input
             type="text"
             bind:value={inputText}
             placeholder="Type your answer…"
             autofocus
-            class="flex-1 px-4 py-3 bg-secondary text-secondary-foreground rounded-full
+            class="flex-1 px-4 py-3 bg-background text-foreground rounded-full
                    placeholder:text-muted-foreground
                    focus:outline-none focus:ring-2 focus:ring-primary"
           />
@@ -518,8 +536,8 @@
           <!-- Type toggle -->
           <button
             onclick={() => (showInput = true)}
-            class="p-3 bg-secondary text-secondary-foreground rounded-full
-                   hover:bg-secondary/70 transition-colors"
+            class="p-3 bg-primary text-secondary-foreground rounded-full
+                   hover:bg-primary/70 transition-colors"
             aria-label="Type instead"
           >
             <MessageSquare class="w-5 h-5" />
