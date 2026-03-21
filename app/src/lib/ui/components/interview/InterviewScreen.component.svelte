@@ -26,11 +26,14 @@
   let currentFollowUpQuestion = $state<string>(''); // single follow-up at a time
   let followUpPhase = $state<'none' | 'first' | 'second'>('none'); // track which follow-up we're on
   let isAISpeaking     = $state(true);
+  let isAudioPlaying   = $state(false); // TTS audio is actually playing (not just loading)
+  let isUserSpeaking   = $state(false); // mic detects actual audio above threshold
   let messages         = $state<{ text: string; isAI: boolean }[]>([]);
   let showInput        = $state(false);
   let inputText        = $state('');
   let collectedAnswers = $state<QAPair[]>([]);
   let isCheckingFollowUp = $state(false); // checking if follow-up is needed
+  let isPendingFollowUp   = $state(false); // hiding card while deciding next question
   let isCompleted = $state(false); // interview is completely done
   
   // Track completed follow-ups per main question (persistent)
@@ -47,6 +50,11 @@
   let stream: MediaStream | null = null;
 
   let currentAudio: HTMLAudioElement | null = null;
+
+  // Volume detection internals
+  let audioContext: AudioContext | null = null;
+  let analyserNode: AnalyserNode | null = null;
+  let volumeCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   // ── Boot ──────────────────────────────────────────────────────
   $effect(() => {
@@ -66,6 +74,7 @@
 
   // ── TTS ───────────────────────────────────────────────────────
   async function speak(text: string): Promise<void> {
+    isPendingFollowUp = false; // reveal card now that we know what to show
     // Stop any audio that's still playing
     if (currentAudio) {
       currentAudio.pause();
@@ -94,23 +103,55 @@
       currentAudio = audio;
 
       await new Promise<void>((resolve) => {
+        audio.onplaying = () => { isAudioPlaying = true; };
         audio.onended = () => {
+          isAudioPlaying = false;
           URL.revokeObjectURL(url);
           currentAudio = null;
           resolve();
         };
         audio.onerror = () => {
+          isAudioPlaying = false;
           URL.revokeObjectURL(url);
           currentAudio = null;
           resolve(); // still resolve so the interview isn't blocked
         };
-        audio.play().catch(() => resolve()); // autoplay blocked — silently continue
+        audio.play().catch(() => { isAudioPlaying = false; resolve(); }); // autoplay blocked — silently continue
       });
     } catch (e) {
       console.error('TTS fetch failed:', e);
     } finally {
+      isAudioPlaying = false;
       isAISpeaking = false;
     }
+  }
+
+  // ── Volume detection for mic ───────────────────────────────────
+  function startVolumeDetection(micStream: MediaStream) {
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyserNode = audioContext.createAnalyser();
+    analyserNode.fftSize = 256;
+    source.connect(analyserNode);
+    const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+    volumeCheckInterval = setInterval(() => {
+      if (!analyserNode) return;
+      analyserNode.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      isUserSpeaking = avg > 8;
+    }, 80);
+  }
+
+  function stopVolumeDetection() {
+    if (volumeCheckInterval !== null) {
+      clearInterval(volumeCheckInterval);
+      volumeCheckInterval = null;
+    }
+    analyserNode?.disconnect();
+    analyserNode = null;
+    audioContext?.close();
+    audioContext = null;
+    isUserSpeaking = false;
   }
 
 
@@ -130,6 +171,7 @@
     } else if (followUpPhase === 'first' && currentFollowUpQuestion) {
       // Just answered first follow-up, increment and try for second
       completedFollowUpsByQuestion[mainStep] = 1;
+      isPendingFollowUp = true;
       currentFollowUpQuestion = '';
       followUpPhase = 'none';
 
@@ -167,6 +209,7 @@
     } else if (followUpPhase === 'second' && currentFollowUpQuestion) {
       // Just answered second follow-up, move to next main question
       completedFollowUpsByQuestion[mainStep] = 2;
+      isPendingFollowUp = true;
       currentFollowUpQuestion = '';
       followUpPhase = 'none';
 
@@ -180,6 +223,7 @@
       }, 900);
     } else {
       // Just answered a main question, try to get first follow-up
+      isPendingFollowUp = true;
       setTimeout(async () => {
         // Check if we've already reached the max 2 follow-ups for this question
         const maxFollowUpsReached = completedFollowUpsByQuestion[mainStep] >= 2;
@@ -273,12 +317,14 @@
 
     audioChunks = [];
     mediaRecorder = new MediaRecorder(stream);
+    startVolumeDetection(stream);
 
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) audioChunks.push(e.data);
     };
 
     mediaRecorder.onstop = async () => {
+      stopVolumeDetection();
       stopStream();
       isRecording = false;
 
@@ -350,10 +396,10 @@
 <div class="min-h-screen flex flex-col bg-background select-none">
 
   <!-- ── Progress dots ───────────────────────────────────────── -->
-  <div class="flex justify-center gap-2 pt-8 pb-4">
-    <!-- Main question dots with their follow-ups below -->
+  <div class="flex justify-center items-center gap-2 pt-8 pb-4">
+    <!-- Main question dots with their follow-ups inline to the right -->
     {#each mainQuestions as _, i}
-      <div class="flex flex-col items-center">
+      <div class="flex flex-row items-center gap-2">
         <!-- Main dot -->
         <div
           in:fly={{ y: -6, duration: 300, delay: i * 80 }}
@@ -372,46 +418,35 @@
           {/if}
         </div>
 
-        <!-- Follow-up dots (ALWAYS show completed ones, current dot only if active question) -->
-        {#if completedFollowUpsByQuestion[i] > 0 || (mainStep === i && followUpPhase !== 'none')}
-          <div
-            in:fly={{ y: -4, duration: 280 }}
-            out:fly={{ y: 4, duration: 200 }}
-            class="flex flex-col items-center gap-1 mt-2"
-          >
-            <!-- Completed follow-up dots (shown permanently) -->
-            {#each Array(completedFollowUpsByQuestion[i]) as _, fIdx}
-              <span
-                in:scale={{ duration: 300, delay: fIdx * 100 }}
-                class="w-2.5 h-2.5 rounded-full bg-accent/70 
-                       shadow-[0_0_6px_rgba(239,68,68,0.4)]"
-              ></span>
-            {/each}
+        <!-- Follow-up dots (inline to the right; completed ones always visible) -->
+        {#each Array(completedFollowUpsByQuestion[i]) as _, fIdx}
+          <span
+            in:scale={{ duration: 300, delay: fIdx * 100 }}
+            class="w-2.5 h-2.5 rounded-full bg-accent/70
+                   shadow-[0_0_6px_rgba(239,68,68,0.4)]"
+          ></span>
+        {/each}
 
-            <!-- Current follow-up dot (only shown if this is the active question) -->
-            {#if mainStep === i && followUpPhase !== 'none'}
-              <span
-                in:scale={{ duration: 300 }}
-                class="w-3 h-3 rounded-full bg-accent scale-110
-                       shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
-              ></span>
-            {/if}
-          </div>
+        <!-- Current (active) follow-up dot -->
+        {#if mainStep === i && followUpPhase !== 'none'}
+          <span
+            in:scale={{ duration: 300 }}
+            class="w-3 h-3 rounded-full bg-accent scale-110
+                   shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
+          ></span>
         {/if}
       </div>
     {/each}
 
     <!-- Final dot (goal/end indicator with icon) -->
-    <div class="flex flex-col items-center">
-      <div
-        in:fly={{ y: -6, duration: 300, delay: 3 * 80 }}
-        class="w-5 h-5 rounded-full transition-all duration-500 flex items-center justify-center
-               {isCompleted
-                 ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)] text-white'
-                 : 'border-1 bg-background border-secondary'}"         
-      >
-        <Flag class="text-secondary w-3/5 h-3/5 {isCompleted ? 'text-white' : 'text-secondary'}" />
-      </div>
+    <div
+      in:fly={{ y: -6, duration: 300, delay: 3 * 80 }}
+      class="w-5 h-5 rounded-full transition-all duration-500 flex items-center justify-center
+             {isCompleted
+               ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(4,162,143,0.6)] text-white'
+               : 'border-1 bg-background border-secondary'}"
+    >
+      <Flag class="text-secondary w-3/5 h-3/5 {isCompleted ? 'text-white' : 'text-secondary'}" />
     </div>
   </div>
 
@@ -424,6 +459,7 @@
     </div>
 
     <!-- Question card — re-mounts on question change for transition -->
+    {#if !isPendingFollowUp}
     {#key `${mainStep}-${followUpPhase}`}
       <div
         in:fly={{ y: 18, duration: 320 }}
@@ -441,6 +477,7 @@
         {/if}
       </div>
     {/key}
+    {/if}
 
     <!-- Follow-up checking indicator -->
     {#if isCheckingFollowUp}
@@ -455,7 +492,7 @@
     {/if}
 
     <!-- Waveform -->
-    <VoiceWaveform isActive={isRecording || isAISpeaking} isListening={isRecording} />
+    <VoiceWaveform isActive={isUserSpeaking || isAudioPlaying} isListening={isRecording} />
 
     <!-- Suggestion chips — only on first main question -->
     {#if mainStep === 0 && followUpPhase === 'none' && messages.length <= 1 && !isRecording}
