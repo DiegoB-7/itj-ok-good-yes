@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly, fade, scale } from 'svelte/transition';
-  import { Mic, MicOff, MessageSquare, SkipForward, Loader2, Sparkles, Check, Flag, X } from '@lucide/svelte';
+  import { Mic, Square, MessageSquare, SkipForward, Loader2, Sparkles, Check, Flag, X } from '@lucide/svelte';
   import AIAvatar from '$lib/ui/components/interview/AIAvatar.component.svelte';
   import ChatBubble   from '$lib/ui/components/interview/ChatBubble.component.svelte';
   import VoiceWaveform from '$lib/ui/components/interview/VoiceWaveForm.component.svelte';
@@ -50,11 +50,20 @@
   let stream: MediaStream | null = null;
 
   let currentAudio: HTMLAudioElement | null = null;
+  let chatListEl: HTMLDivElement | null = null;
 
   // Volume detection internals
   let audioContext: AudioContext | null = null;
   let analyserNode: AnalyserNode | null = null;
   let volumeCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+  // ── Auto-scroll chat to bottom on new messages ─────────────
+  $effect(() => {
+    const _ = messages.length; // track
+    if (showInput && chatListEl) {
+      setTimeout(() => chatListEl?.scrollTo({ top: chatListEl.scrollHeight, behavior: 'smooth' }), 50);
+    }
+  });
 
   // ── Boot ──────────────────────────────────────────────────────
   $effect(() => {
@@ -390,6 +399,9 @@
   }
 
   const visible = $derived(messages.slice(-4));
+
+  // Disable controls while the AI is thinking or loading next question (not while speaking)
+  const isAIBusy = $derived(isCheckingFollowUp || isPendingFollowUp);
 </script>
 
 
@@ -400,6 +412,24 @@
     <!-- Main question dots with their follow-ups inline to the right -->
     {#each mainQuestions as _, i}
       <div class="flex flex-row items-center gap-2">
+        <!-- Follow-up dots (inline to the left; completed ones always visible) -->
+        {#each Array(completedFollowUpsByQuestion[i]) as _, fIdx}
+          <span
+            in:scale={{ duration: 300, delay: fIdx * 100 }}
+            class="w-2.5 h-2.5 rounded-full bg-accent/70
+                   shadow-[0_0_6px_rgba(239,68,68,0.4)]"
+          ></span>
+        {/each}
+
+        <!-- Current (active) follow-up dot — always rightmost before main dot -->
+        {#if mainStep === i && followUpPhase !== 'none'}
+          <span
+            in:scale={{ duration: 300 }}
+            class="w-3 h-3 rounded-full bg-accent scale-110
+                   shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
+          ></span>
+        {/if}
+
         <!-- Main dot -->
         <div
           in:fly={{ y: -6, duration: 300, delay: i * 80 }}
@@ -417,24 +447,6 @@
             <Check class="w-2 h-2 text-primary-foreground" />
           {/if}
         </div>
-
-        <!-- Follow-up dots (inline to the right; completed ones always visible) -->
-        {#each Array(completedFollowUpsByQuestion[i]) as _, fIdx}
-          <span
-            in:scale={{ duration: 300, delay: fIdx * 100 }}
-            class="w-2.5 h-2.5 rounded-full bg-accent/70
-                   shadow-[0_0_6px_rgba(239,68,68,0.4)]"
-          ></span>
-        {/each}
-
-        <!-- Current (active) follow-up dot -->
-        {#if mainStep === i && followUpPhase !== 'none'}
-          <span
-            in:scale={{ duration: 300 }}
-            class="w-3 h-3 rounded-full bg-accent scale-110
-                   shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
-          ></span>
-        {/if}
       </div>
     {/each}
 
@@ -458,38 +470,41 @@
       <AIAvatar isSpeaking={isAISpeaking} size="lg" />
     </div>
 
-    <!-- Question card — re-mounts on question change for transition -->
-    {#if !isPendingFollowUp}
+    <!-- Question card — always present; content swaps inside -->
     {#key `${mainStep}-${followUpPhase}`}
       <div
         in:fly={{ y: 18, duration: 320 }}
         class="bg-card text-card-foreground rounded-2xl px-6 py-5
-               max-w-md w-full text-center mb-8 shadow-lg"
+               max-w-md w-full text-center mb-8 shadow-lg min-h-[88px] flex flex-col items-center justify-center"
       >
-        <div class="flex items-center gap-2 justify-center mb-1">
-          {#if followUpPhase !== 'none'}
-            <Sparkles class="w-4 h-4 text-accent" />
-          {/if}
-        </div>
-        <p class="text-lg font-medium leading-snug">{getCurrentQuestion()}</p>
-        {#if followUpPhase !== 'none'}
-          <p class="text-xs text-muted-foreground mt-2">Follow-up question</p>
+        {#if isPendingFollowUp || isCheckingFollowUp}
+          <div
+            in:fade={{ duration: 200 }}
+            out:fade={{ duration: 150 }}
+            class="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <span class="flex gap-1">
+              <span class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+              <span class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+              <span class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+            </span>
+            <span>AI is thinking...</span>
+          </div>
+        {:else}
+          <div in:fade={{ duration: 200, delay: 50 }}>
+            <div class="flex items-center gap-2 justify-center mb-1">
+              {#if followUpPhase !== 'none'}
+                <Sparkles class="w-4 h-4 text-accent" />
+              {/if}
+            </div>
+            <p class="text-lg font-medium leading-snug">{getCurrentQuestion()}</p>
+            {#if followUpPhase !== 'none'}
+              <p class="text-xs text-muted-foreground mt-2">Follow-up question</p>
+            {/if}
+          </div>
         {/if}
       </div>
     {/key}
-    {/if}
-
-    <!-- Follow-up checking indicator -->
-    {#if isCheckingFollowUp}
-      <div
-        in:fade={{ duration: 200 }}
-        out:fade={{ duration: 200 }}
-        class="flex items-center gap-2 text-sm text-muted-foreground mb-4"
-      >
-        <div class="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></div>
-        <span>AI is thinking...</span>
-      </div>
-    {/if}
 
     <!-- Waveform -->
     <VoiceWaveform isActive={isUserSpeaking || isAudioPlaying} isListening={isRecording} />
@@ -530,9 +545,17 @@
     <div class="max-w-md mx-auto">
       {#if showInput}
         <!-- Chat history -->
-        <div class="w-full max-w-lg mt-7 space-y-3 max-h-48 overflow-y-auto pr-5 mb-4">
-          {#each visible as msg, i (msg.text + i)}
-            <ChatBubble message={msg.text} isAI={msg.isAI} />
+        <div
+          bind:this={chatListEl}
+          in:fly={{ y: 10, duration: 250 }}
+          class="chat-history w-full max-w-lg space-y-2 max-h-52 overflow-y-auto pb-1 mb-4 scroll-smooth"
+        >
+          {#each messages as msg, i (msg.text + i)}
+            <ChatBubble
+              message={msg.text}
+              isAI={msg.isAI}
+              showSeparator={msg.isAI && i > 0 && !messages[i - 1].isAI}
+            />
           {/each}
         </div>
         <!-- Text input mode -->
@@ -573,8 +596,10 @@
           <!-- Type toggle -->
           <button
             onclick={() => (showInput = true)}
+            disabled={isAIBusy}
             class="p-3 bg-primary text-secondary-foreground rounded-full
-                   hover:bg-primary/70 transition-colors"
+                   hover:bg-primary/70 transition-colors
+                   disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
             aria-label="Type instead"
           >
             <MessageSquare class="w-5 h-5" />
@@ -583,7 +608,7 @@
           <!-- Main mic button -->
           <button
               onclick={toggleMic}
-              disabled={isTranscribing}
+              disabled={isTranscribing || isAIBusy}
               class="btn-pressable p-6 rounded-full font-semibold transition-colors
                     disabled:opacity-50 disabled:cursor-not-allowed
                     {isRecording
@@ -594,7 +619,7 @@
               {#if isTranscribing}
                 <Loader2 class="w-8 h-8 animate-spin" />
               {:else if isRecording}
-                <MicOff class="w-8 h-8" />
+                <Square class="w-8 h-8 fill-current" />
               {:else}
                 <Mic class="w-8 h-8" />
               {/if}
@@ -603,8 +628,10 @@
           <!-- Skip -->
           <button
             onclick={() => respond("I'd prefer to skip this one.")}
+            disabled={isAIBusy}
             class="p-3 text-muted-foreground hover:text-foreground transition-colors
-                   flex items-center gap-1"
+                   flex items-center gap-1
+                   disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
           >
             <SkipForward class="w-5 h-5" />
             <span class="text-sm">Skip</span>
@@ -617,3 +644,24 @@
   </div>
 
 </div>
+
+<style>
+  .chat-history::-webkit-scrollbar {
+    width: 4px;
+  }
+  .chat-history::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .chat-history::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .chat-history::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.4);
+  }
+  /* Firefox */
+  .chat-history {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+</style>

@@ -78,17 +78,16 @@
 <div class="min-h-screen flex flex-col items-center justify-center px-6">
 
   <!-- Animated icon -->
-  <div class="relative mb-12">
+  <div class="relative mb-12 w-40 h-40">
     <div
-      class="analyzing-glow absolute rounded-full bg-primary/20 blur-xl"
-      style="width:160px; height:160px;"
+      class="analyzing-glow absolute inset-0 rounded-full bg-primary/20 blur-xl"
     ></div>
 
     {#key currentStep}
       <div
-        in:fly={{ y: 16, duration: 380 }}
-        out:fade={{ duration: 180 }}
-        class="relative w-40 h-40 rounded-full bg-linear-to-br from-primary to-accent
+        in:fly={{ y: 20, duration: 350, delay: 200 }}
+        out:fly={{ y: -20, duration: 200 }}
+        class="absolute inset-0 rounded-full bg-linear-to-br from-primary to-accent
                flex items-center justify-center"
       >
         <CurrentIcon class="w-16 h-16 text-primary-foreground" />
@@ -97,15 +96,17 @@
   </div>
 
   <!-- Step label -->
-  {#key currentStep}
-    <p
-      in:fly={{ y: 16, duration: 280 }}
-      out:fly={{ y: -16, duration: 180 }}
-      class="text-xl font-medium text-foreground mb-8 text-center"
-    >
-      {steps[currentStep].text}
-    </p>
-  {/key}
+  <div class="relative h-9 w-full max-w-md mb-8 overflow-hidden">
+    {#key currentStep}
+      <p
+        in:fly={{ y: 16, duration: 280, delay: 180 }}
+        out:fly={{ y: -16, duration: 180 }}
+        class="absolute inset-0 text-xl font-medium text-foreground text-center"
+      >
+        {steps[currentStep].text}
+      </p>
+    {/key}
+  </div>
 
   <!-- Progress bar -->
   <div class="w-full max-w-md">
