@@ -40,7 +40,7 @@ function buildOnetContext(answers: QAPair[]): string {
 // ── System prompt ─────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(onetContext: string): string {
-  return `You are LevelUp, an expert AI career coach with access to real O*NET occupational data.
+  return `You are MentorIA, an expert AI career coach with access to real O*NET occupational data.
 
 ${onetContext ? onetContext + '\n\n' : ''}Use the O*NET data above as your primary source of truth when identifying skill gaps and required competencies. Cross-reference what the user said in their interview against the actual skill requirements for their target occupation.
 
