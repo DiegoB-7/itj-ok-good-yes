@@ -1,9 +1,9 @@
 <script lang="ts">
   import { scale } from 'svelte/transition';
-  import { Flame } from '@lucide/svelte';
+  import { Flame, Shield } from '@lucide/svelte';
 
   interface Props {
-    days: boolean[];
+    days: (boolean | null)[];
   }
 
   let { days }: Props = $props();
@@ -28,11 +28,17 @@
         <div
           in:scale={{ duration: 300, delay: index * 100 }}
           class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all
-                 {completed
+                 {completed === true
                    ? 'bg-linear-to-br from-orange-400 to-red-600 text-white animate-flame-pulse'
+                   : completed === null
+                   ? 'bg-linear-to-br from-blue-400 to-cyan-600 text-white animate-shield-pulse'
                    : 'bg-gray-200 text-gray-400'}"
         >
-          {completed ? '🔥' : ''}
+          {#if completed === true}
+            <Flame class="w-5 h-5" />
+          {:else if completed === null}
+            <Shield class="w-5 h-5" />
+          {/if}
         </div>
         <span class="text-xs text-muted-foreground">{dayLabels[index]}</span>
       </div>

@@ -4,9 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #F8FAFC;
+  --background:#F8FAFC;
   --foreground: #1A2A3A;
-  --card: #F8FAFC;
+  --card: #FFFFFF;
   --card-foreground: #334F68;
   --popover: #243647;
   --popover-foreground: #F8FAFC;
@@ -170,6 +170,11 @@ to {
   50%       { box-shadow: 0 0 16px rgba(220,38,38,0.7); }
 }
 
+@keyframes shield-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(60, 197, 251, 0.4);  }
+  50%       { box-shadow: 0 0 16px rgba(38, 71, 220, 0.7); }
+}
+
 @keyframes fire-streak {
   0%, 100% { color: #f97316; }
   50%       { color: #dc2626; }
@@ -177,6 +182,7 @@ to {
 
 .animate-flame-flicker { animation: flame-flicker 1.5s ease-in-out infinite; }
 .animate-flame-pulse   { animation: flame-pulse   1.2s ease-in-out infinite; }
+.animate-shield-pulse  { animation: shield-pulse  1.2s ease-in-out infinite; }
 .animate-fire-streak   { animation: fire-streak   2s   ease-in-out infinite; }
 
 /* ─── Utility classes ─── */

@@ -9,7 +9,7 @@
   import type { CareerAnalysis } from '$lib/interfaces/types.interface';
   import StreakTracker from './StreakTracker.component.svelte';
   import PriorityWeek from './PriorityWeek.component.svelte';
-
+  import logo from "$lib/assets/MentorIAlogolongLess.svg";
   interface Props {
     analysis: CareerAnalysis;
     onRestart: () => void;
@@ -50,9 +50,9 @@
 <div class="min-h-screen bg-background">
 
   <!-- ── Sticky header ─────────────────────────────────────── -->
-  <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+  <header class="sticky bg-card text-card-foreground space-y-4 top-4 z-10 shadow">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-bold text-primary">LevelUp</h1>
+      <img src={logo} alt="logo"/>
       <div class="flex items-center gap-3">
         <button class="px-4 py-2 text-sm text-muted-foreground hover:text-foreground
                        transition-colors flex items-center gap-2">
@@ -61,8 +61,8 @@
         </button>
         <button
           onclick={onRestart}
-          class="px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm
-                 font-medium hover:bg-secondary/80 transition-colors flex items-center gap-2"
+          class="btn-pressable px-4 py-2 bg-gradient-primary text-secondary-foreground rounded-full text-sm
+                 font-medium hover:bg-gradient-primary/80 transition-colors flex items-center gap-2"
         >
           <RotateCcw class="w-3.5 h-3.5" />
           Start over
@@ -90,11 +90,11 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
-                <span class="px-4 py-2 bg-accent text-accent-foreground rounded-full
+                   <span class="px-4 py-2 bg-accent text-accent-foreground rounded-full
                              font-bold text-sm">
-                  Level {analysis.currentLevel} of 10
-                </span>
-                {#each analysis.skills as skill, i}
+                    Level {analysis.currentLevel} of 10
+                  </span>
+                  {#each analysis.skills as skill, i}
                   <span
                     in:scale={{ duration: 280, delay: i * 60 }}
                     class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full
@@ -120,9 +120,10 @@
           <!-- Progress bar -->
           <div class="mt-6 space-y-2">
             <div class="flex justify-between text-sm">
-              <span class="text-muted-foreground">Progress to goal</span>
+              <span class="text-muted-foreground font-bold">Progress to goal</span>
+              <span class="font-semibold">{$overallProgress}%</span>
             </div>
-            <div class="h-3 bg-secondary rounded-full overflow-hidden">
+            <div class="h-5 bg-secondary rounded-full overflow-hidden">
               <div
                 class="h-full bg-linear-to-r from-primary to-accent rounded-full"
                 style="width:{$overallProgress}%"
@@ -264,7 +265,7 @@
       <aside class="w-full lg:w-72 shrink-0 space-y-4">
 
         <div in:fly={{ x: 20, duration: 400, delay: 200 }}>
-          <StreakTracker days={[true, true, true, false, true, true, false]} />
+          <StreakTracker days={[true, true, null, true, true, true, false]} />
         </div>
 
         <div in:fly={{ x: 20, duration: 400, delay: 300 }}>
