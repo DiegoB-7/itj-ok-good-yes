@@ -7,6 +7,8 @@
     CircleAlert, RotateCcw, ExternalLink,
   } from '@lucide/svelte';
   import type { CareerAnalysis } from '$lib/interfaces/types.interface';
+  import StreakTracker from './StreakTracker.component.svelte';
+  import PriorityWeek from './PriorityWeek.component.svelte';
 
   interface Props {
     analysis: CareerAnalysis;
@@ -47,9 +49,9 @@
 
 <div class="min-h-screen bg-background">
 
-  <!-- ── Sticky header ────────────────────────────────────────── -->
+  <!-- ── Sticky header ─────────────────────────────────────── -->
   <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
       <h1 class="text-xl font-bold text-primary">LevelUp</h1>
       <div class="flex items-center gap-3">
         <button class="px-4 py-2 text-sm text-muted-foreground hover:text-foreground
@@ -69,189 +71,212 @@
     </div>
   </header>
 
-  <div class="max-w-4xl mx-auto px-6 py-8 space-y-10">
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    <div class="flex flex-col lg:flex-row gap-6">
 
-    <!-- ── Profile summary ──────────────────────────────────── -->
-    <section
-      in:fly={{ y: 20, duration: 400 }}
-      class="bg-card text-card-foreground rounded-3xl p-8"
-    >
-      <div class="flex flex-col md:flex-row md:items-start gap-6">
-        <div class="flex-1 space-y-4">
-          <div>
-            <p class="text-sm text-muted-foreground mb-1">Your current role</p>
-            <h2 class="text-2xl font-bold">{analysis.currentRole}</h2>
-          </div>
+      <!-- ── Left: main content ─────────────────────────────── -->
+      <div class="flex-1 space-y-8 min-w-0">
 
-          <!-- Skill badges -->
-          <div class="flex flex-wrap gap-2">
-            {#each analysis.skills as skill, i}
-              <span
-                in:scale={{ duration: 280, delay: i * 60 }}
-                class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full
-                       border bg-primary/15 text-primary border-primary/25"
-              >
-                {skill}
-              </span>
-            {/each}
-          </div>
+        <!-- Profile summary -->
+        <section
+          in:fly={{ y: 20, duration: 400 }}
+          class="bg-card text-card-foreground rounded-3xl p-8"
+        >
+          <div class="flex flex-col md:flex-row md:items-start gap-6">
+            <div class="flex-1 space-y-4">
+              <div>
+                <p class="text-sm text-muted-foreground mb-1">Your current role</p>
+                <h2 class="text-2xl font-bold">{analysis.currentRole}</h2>
+              </div>
 
-          <p class="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
-        </div>
-
-        <div class="md:text-right space-y-2 shrink-0">
-          <p class="text-sm text-muted-foreground">Target role</p>
-          <div class="flex items-center gap-2 text-base font-semibold md:justify-end">
-            <ArrowRight class="w-4 h-4 text-primary" />
-            {analysis.targetRole}
-          </div>
-        </div>
-      </div>
-
-      <!-- Overall progress -->
-      <div class="mt-6 space-y-2">
-        <div class="flex justify-between text-sm">
-          <span class="text-muted-foreground">Overall seniority</span>
-          <span class="font-bold">Level {analysis.currentLevel} / 10</span>
-        </div>
-        <div class="h-3 bg-secondary rounded-full overflow-hidden">
-          <div
-            class="h-full bg-linear-to-r from-primary to-accent rounded-full"
-            style="width:{$overallProgress}%"
-          ></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Gap analysis ──────────────────────────────────────── -->
-    <section
-      in:fly={{ y: 20, duration: 400, delay: 150 }}
-      class="space-y-5"
-    >
-      <div class="flex items-center gap-3">
-        <CircleAlert class="w-6 h-6 text-destructive" />
-        <h2 class="text-2xl font-bold">What's holding you back</h2>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2">
-        {#each analysis.gaps as gap, i}
-          {@const cfg  = severityMap[gap.severity]}
-          {@const barW = Math.min((gap.currentLevel / gap.requiredLevel) * 100, 100)}
-
-          <div
-            in:fly={{ y: 20, duration: 350, delay: 80 * i }}
-            class="bg-card text-card-foreground rounded-2xl p-5 space-y-4"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div class="space-y-1">
-                <h3 class="font-bold text-base">{gap.title}</h3>
-                <span class="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full {cfg.cls}">
-                  {cfg.label}
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-4 py-2 bg-accent text-accent-foreground rounded-full
+                             font-bold text-sm">
+                  Level {analysis.currentLevel} of 10
                 </span>
-              </div>
-            </div>
-
-            <p class="text-sm text-muted-foreground leading-relaxed">{gap.description}</p>
-
-            <div class="space-y-1.5">
-              <div class="flex justify-between text-xs text-muted-foreground">
-                <span>Current: {gap.currentLevel}</span>
-                <span>Required: {gap.requiredLevel}</span>
-              </div>
-              <div class="h-2 bg-secondary rounded-full overflow-hidden">
-                <div
-                  class="h-full rounded-full {variantBar[gap.severity]}"
-                  style="width:{barW}%"
-                ></div>
-              </div>
-            </div>
-
-            <button
-              onclick={scrollToRoadmap}
-              class="w-full py-2 px-4 border border-primary text-primary rounded-full
-                     text-sm font-semibold hover:bg-primary/10 transition-colors"
-            >
-              Fix this gap
-            </button>
-          </div>
-        {/each}
-      </div>
-    </section>
-
-    <!-- ── Career roadmap ────────────────────────────────────── -->
-    <section
-      bind:this={roadmapEl}
-      in:fly={{ y: 20, duration: 400, delay: 300 }}
-      class="space-y-5"
-    >
-      <div class="flex items-center gap-3">
-        <BookOpen class="w-6 h-6 text-accent" />
-        <h2 class="text-2xl font-bold">Your Career Roadmap</h2>
-      </div>
-
-      <div class="space-y-4">
-        {#each analysis.milestones as milestone, i}
-          <div
-            in:fly={{ y: 16, duration: 350, delay: 100 * i }}
-            class="bg-card text-card-foreground rounded-2xl p-6 space-y-3
-                   border-l-4 {i === 0 ? 'border-primary' : 'border-secondary'}"
-          >
-            <!-- Step indicator + title -->
-            <div class="flex items-center gap-3">
-              <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm
-                           font-bold shrink-0
-                           {i === 0
-                             ? 'bg-primary text-primary-foreground'
-                             : 'bg-secondary text-secondary-foreground'}">
-                {i + 1}
-              </span>
-              <h3 class="font-bold text-base">{milestone.title}</h3>
-              <span class="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-                ⏱ {milestone.estimatedTime}
-              </span>
-            </div>
-
-            <p class="text-sm text-muted-foreground leading-relaxed pl-11">
-              {milestone.whatToLearn}
-            </p>
-
-            <!-- Resources -->
-            {#if milestone.resources.length > 0}
-              <div class="pl-11 flex flex-wrap gap-2">
-                {#each milestone.resources as res}
-                  <a
-                    href={res.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-secondary
-                           text-secondary-foreground text-xs rounded-full
-                           hover:bg-primary hover:text-primary-foreground transition-colors"
+                {#each analysis.skills as skill, i}
+                  <span
+                    in:scale={{ duration: 280, delay: i * 60 }}
+                    class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full
+                           border bg-primary/15 text-primary border-primary/25"
                   >
-                    {res.title}
-                    <ExternalLink class="w-3 h-3" />
-                  </a>
+                    {skill}
+                  </span>
                 {/each}
               </div>
-            {/if}
+
+              <p class="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
+            </div>
+
+            <div class="md:text-right space-y-1 shrink-0">
+              <p class="text-sm text-muted-foreground">Target role</p>
+              <div class="flex items-center gap-2 text-base font-semibold md:justify-end">
+                <ArrowRight class="w-4 h-4 text-primary" />
+                {analysis.targetRole}
+              </div>
+            </div>
           </div>
-        {/each}
+
+          <!-- Progress bar -->
+          <div class="mt-6 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-muted-foreground">Progress to goal</span>
+            </div>
+            <div class="h-3 bg-secondary rounded-full overflow-hidden">
+              <div
+                class="h-full bg-linear-to-r from-primary to-accent rounded-full"
+                style="width:{$overallProgress}%"
+              ></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gap analysis -->
+        <section
+          in:fly={{ y: 20, duration: 400, delay: 150 }}
+          class="space-y-5"
+        >
+          <div class="flex items-center gap-3">
+            <CircleAlert class="w-6 h-6 text-destructive" />
+            <h2 class="text-2xl font-bold">What's holding you back</h2>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            {#each analysis.gaps as gap, i}
+              {@const cfg  = severityMap[gap.severity]}
+              {@const barW = Math.min((gap.currentLevel / gap.requiredLevel) * 100, 100)}
+
+              <div
+                in:fly={{ y: 20, duration: 350, delay: 80 * i }}
+                class="bg-card text-card-foreground rounded-2xl p-5 space-y-4"
+              >
+                <div class="space-y-1">
+                  <h3 class="font-bold text-base">{gap.title}</h3>
+                  <span class="inline-block px-2.5 py-0.5 text-xs font-semibold
+                               rounded-full {cfg.cls}">
+                    {cfg.label}
+                  </span>
+                </div>
+
+                <p class="text-sm text-muted-foreground leading-relaxed">{gap.description}</p>
+
+                <div class="space-y-1.5">
+                  <div class="flex justify-between text-xs text-muted-foreground">
+                    <span>Current: {gap.currentLevel}</span>
+                    <span>Required: {gap.requiredLevel}</span>
+                  </div>
+                  <div class="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full {variantBar[gap.severity]}"
+                      style="width:{barW}%"
+                    ></div>
+                  </div>
+                </div>
+
+                <button
+                  onclick={scrollToRoadmap}
+                  class="w-full py-2 px-4 border border-primary text-primary rounded-full
+                         text-sm font-semibold hover:bg-primary/10 transition-colors"
+                >
+                  Fix this gap
+                </button>
+              </div>
+            {/each}
+          </div>
+        </section>
+
+        <!-- Career roadmap -->
+        <section
+          bind:this={roadmapEl}
+          in:fly={{ y: 20, duration: 400, delay: 300 }}
+          class="space-y-5"
+        >
+          <div class="flex items-center gap-3">
+            <BookOpen class="w-6 h-6 text-accent" />
+            <h2 class="text-2xl font-bold">Your Career Roadmap</h2>
+          </div>
+
+          <div class="space-y-4">
+            {#each analysis.milestones as milestone, i}
+              <div
+                in:fly={{ y: 16, duration: 350, delay: 100 * i }}
+                class="bg-card text-card-foreground rounded-2xl p-6 space-y-3
+                       border-l-4 {i === 0 ? 'border-primary' : 'border-secondary'}"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 rounded-full flex items-center justify-center
+                               text-sm font-bold shrink-0
+                               {i === 0
+                                 ? 'bg-primary text-primary-foreground'
+                                 : 'bg-secondary text-secondary-foreground'}">
+                    {i + 1}
+                  </span>
+                  <h3 class="font-bold text-base">{milestone.title}</h3>
+                  <span class="ml-auto text-xs text-muted-foreground whitespace-nowrap">
+                    ⏱ {milestone.estimatedTime}
+                  </span>
+                </div>
+
+                <p class="text-sm text-muted-foreground leading-relaxed pl-11">
+                  {milestone.whatToLearn}
+                </p>
+
+                {#if milestone.resources.length > 0}
+                  <div class="pl-11 flex flex-wrap gap-2">
+                    {#each milestone.resources as res}
+                      <a
+                        href={res.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 px-3 py-1 bg-secondary
+                               text-secondary-foreground text-xs rounded-full
+                               hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        {res.title}
+                        <ExternalLink class="w-3 h-3" />
+                      </a>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </section>
+
+        <!-- Share CTA -->
+        <div
+          in:fly={{ y: 16, duration: 350, delay: 450 }}
+          class="flex justify-center pb-8"
+        >
+          <button
+            class="btn-pressable inline-flex items-center gap-2 px-8 py-3
+                   bg-gradient-primary text-primary-foreground rounded-full font-semibold
+                   shadow-[0_0_24px_rgba(4,162,143,0.3)]"
+          >
+            <Zap class="w-4 h-4" />
+            Share my roadmap
+          </button>
+        </div>
+
       </div>
-    </section>
 
-    <!-- ── Share CTA ─────────────────────────────────────────── -->
-    <div
-      in:fly={{ y: 16, duration: 350, delay: 450 }}
-      class="flex justify-center pb-8"
-    >
-      <button
-        class="btn-pressable inline-flex items-center gap-2 px-8 py-3
-               bg-gradient-primary text-primary-foreground rounded-full font-semibold
-               shadow-[0_0_24px_rgba(4,162,143,0.3)]"
-      >
-        <Zap class="w-4 h-4" />
-        Share my roadmap
-      </button>
+      <!-- ── Right: sidebar ─────────────────────────────────── -->
+      <aside class="w-full lg:w-72 shrink-0 space-y-4">
+
+        <div in:fly={{ x: 20, duration: 400, delay: 200 }}>
+          <StreakTracker days={[true, true, true, false, true, true, false]} />
+        </div>
+
+        <div in:fly={{ x: 20, duration: 400, delay: 300 }}>
+          <PriorityWeek tasks={[
+            { text: 'Complete 3 LeetCode medium problems',  done: true  },
+            { text: 'Watch system design video on caching', done: false },
+            { text: 'Practice explaining a past project',   done: false },
+          ]} />
+        </div>
+
+      </aside>
+
     </div>
-
   </div>
 </div>

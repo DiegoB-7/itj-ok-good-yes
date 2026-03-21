@@ -158,6 +158,27 @@ to {
   50%       { transform: scale(1.2); opacity: 0.8; }
 }
 
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1)    rotate(-3deg); opacity: 1;   }
+  25%       { transform: scale(1.1) rotate(3deg);  opacity: 0.9; }
+  50%       { transform: scale(0.95) rotate(-2deg); opacity: 1;  }
+  75%       { transform: scale(1.05) rotate(2deg);  opacity: 0.95;}
+}
+
+@keyframes flame-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(251,146,60,0.4);  }
+  50%       { box-shadow: 0 0 16px rgba(220,38,38,0.7); }
+}
+
+@keyframes fire-streak {
+  0%, 100% { color: #f97316; }
+  50%       { color: #dc2626; }
+}
+
+.animate-flame-flicker { animation: flame-flicker 1.5s ease-in-out infinite; }
+.animate-flame-pulse   { animation: flame-pulse   1.2s ease-in-out infinite; }
+.animate-fire-streak   { animation: fire-streak   2s   ease-in-out infinite; }
+
 /* ─── Utility classes ─── */
 
 .animate-float         { animation: float  6s ease-in-out infinite; }
